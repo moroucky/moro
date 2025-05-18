@@ -358,8 +358,7 @@
                 </div>
 
                 <div class="music-toggle-button" id="music-toggle-button">
-                    <i class="fas fa-volume-up"></i>
-                </div>
+                    <i class="fas fa-volume-up"></i> </div>
 
                 <div class="hidden md:flex space-x-6 rtl:space-x-reverse items-center">
                     <a href="#home" class="nav-link" data-lang-key="navHome">الرئيسية</a>
@@ -1082,63 +1081,54 @@
         const musicToggleButton = document.getElementById('music-toggle-button');
         const musicIcon = musicToggleButton ? musicToggleButton.querySelector('i') : null;
 
-        // Attempt to autoplay on user interaction (e.g., first click anywhere)
-        // This is a common workaround for browser autoplay policies
-        let hasInteracted = false;
-        document.body.addEventListener('click', () => {
-            if (!hasInteracted && backgroundMusic) {
-                backgroundMusic.play().catch(error => {
-                    console.log('Autoplay prevented:', error);
-                    // Optionally show a message to the user asking them to click the play button
-                });
-                hasInteracted = true;
-                 // Set icon to mute when music starts playing after interaction
-                 if (musicIcon) {
+        // Function to update the music icon based on the music state
+        function updateMusicIcon() {
+            if (musicIcon) {
+                if (!backgroundMusic.paused) {
+                    // Music is playing, show the volume-up icon
                     musicIcon.classList.remove('fa-volume-mute');
                     musicIcon.classList.add('fa-volume-up');
+                } else {
+                    // Music is paused, show the mute icon
+                    musicIcon.classList.remove('fa-volume-up');
+                    musicIcon.classList.add('fa-volume-mute');
                 }
             }
-        }, { once: true }); // Remove the listener after the first click
+        }
+
+        // Attempt to autoplay the music when the page loads
+        // Autoplay might be blocked by browsers, so we also add a click listener
+        window.addEventListener('load', () => {
+            if (backgroundMusic) {
+                backgroundMusic.play().then(() => {
+                    // Autoplay was successful, update icon
+                    updateMusicIcon();
+                }).catch(error => {
+                    console.log('Autoplay prevented:', error);
+                    // Autoplay failed, music is likely paused. Update icon to mute.
+                    updateMusicIcon();
+                });
+            }
+        });
+
 
         if (musicToggleButton && backgroundMusic && musicIcon) {
+            // Add click listener to the button
             musicToggleButton.addEventListener('click', () => {
                 if (backgroundMusic.paused) {
                     backgroundMusic.play();
-                    // Show mute icon when playing
-                    musicIcon.classList.remove('fa-volume-up');
-                    musicIcon.classList.add('fa-volume-mute');
                 } else {
                     backgroundMusic.pause();
-                    // Show volume-up icon when paused
-                    musicIcon.classList.remove('fa-volume-mute');
-                    musicIcon.classList.add('fa-volume-up');
                 }
             });
 
              // Update icon based on actual play/pause events
-             backgroundMusic.addEventListener('play', () => {
-                 if (musicIcon) {
-                     musicIcon.classList.remove('fa-volume-up');
-                     musicIcon.classList.add('fa-volume-mute');
-                 }
-             });
-             backgroundMusic.addEventListener('pause', () => {
-                 if (musicIcon) {
-                     musicIcon.classList.remove('fa-volume-mute');
-                     musicIcon.classList.add('fa-volume-up');
-                 }
-             });
+             backgroundMusic.addEventListener('play', updateMusicIcon);
+             backgroundMusic.addEventListener('pause', updateMusicIcon);
 
-             // Set initial icon state based on whether music is paused or not
-             if (backgroundMusic.paused) {
-                 // If paused initially, show volume-up icon
-                 musicIcon.classList.remove('fa-volume-mute');
-                 musicIcon.classList.add('fa-volume-up');
-             } else {
-                 // If playing initially, show mute icon
-                 musicIcon.classList.remove('fa-volume-mute');
-                 musicIcon.classList.add('fa-volume-up');
-             }
+             // Set initial icon state when the script loads (before window load)
+             // This handles cases where the audio element might already be in a certain state
+             updateMusicIcon();
         }
 
 
