@@ -124,7 +124,7 @@
         .slide-right.is-visible { opacity: 1; transform: translateX(0); }
 
         /* Background images for sections */
-        #about::before, #features::before, #level_overview::before, #production::before, #media::before, #support::before, #news::before, #wishlist::before, .footer::before {
+        #about::before, #features::before, #level_overview::before, #production::before, #media::before, #support::before, #news::before, #wishlist::before, #contact::before, .footer::before {
             content: '';
             position: absolute;
             top: 0;
@@ -147,6 +147,7 @@
         #support::before { background-image: url('https://i.ibb.co/R4YzkPB9/Screenshot-2024-02-11-224339.png'); }
         #news::before { background-image: url('https://i.ibb.co/zHVWjk23/Screenshot-2025-05-17-230328.png'); }
         #wishlist::before { background-image: url('https://i.ibb.co/VWC1Lk0b/Screenshot-2025-05-17-214416.png'); }
+        #contact::before { background-image: url('https://i.ibb.co/Wvk6g5nt/Screenshot-2024-10-20-014617-processed.png'); opacity: 0.08; } /* Added contact section background */
         .footer::before { background-image: url('https://i.ibb.co/Wvk6g5nt/Screenshot-2024-10-20-014617-processed.png'); opacity: 0.05; /* Lower opacity for footer */ }
 
         /* Ensure content is above the background */
@@ -227,11 +228,8 @@
         }
 
         /* Style for the music toggle button */
+        /* Removed fixed positioning to place it in the navbar */
         .music-toggle-button {
-            position: fixed;
-            top: 20px; /* Adjust position as needed */
-            right: 20px; /* Adjust position as needed */
-            z-index: 1000; /* Above other elements */
             background-color: rgba(180, 140, 70, 0.85); /* Secondary color with opacity */
             color: var(--color-background-dark);
             width: 40px;
@@ -243,9 +241,10 @@
             cursor: pointer;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             transition: background-color 0.3s ease, transform 0.2s ease;
+            /* Added margin for spacing within the navbar */
+            margin-left: 1rem;
+            margin-right: 1rem;
         }
-        html[dir="rtl"] .music-toggle-button { right: auto; left: 20px; }
-        html[dir="ltr"] .music-toggle-button { right: 20px; left: auto; }
 
         .music-toggle-button:hover {
             background-color: var(--color-secondary-hover);
@@ -297,6 +296,49 @@
             border-color: var(--color-secondary);
         }
 
+        /* Style for the small logo in the navbar */
+        .navbar-logo-small {
+            height: 55px; /* Increased size further */
+            width: auto; /* Maintain aspect ratio */
+            margin-left: 1rem; /* Space from title */
+            margin-right: 1rem; /* Space from menu links */
+        }
+
+        /* Styles for the contact form */
+        .contact-form input[type="text"],
+        .contact-form input[type="email"],
+        .contact-form textarea {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--color-text-light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .contact-form textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .contact-form input[type="text"]:focus,
+        .contact-form input[type="email"]:focus,
+        .contact-form textarea:focus {
+            outline: none;
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 3px rgba(180, 140, 70, 0.3);
+        }
+
+         .contact-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--color-text-medium);
+            font-size: 0.9rem;
+            font-weight: 600;
+         }
+
 
     </style>
 </head>
@@ -307,16 +349,19 @@
         Your browser does not support the audio element.
     </audio>
 
-    <div class="music-toggle-button" id="music-toggle-button">
-        <i class="fas fa-volume-up"></i> </div>
-
-
     <nav class="navbar fixed top-0 left-0 right-0 z-50">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center">
-                    <span class="text-2xl font-bold text-white font-heading" data-lang-key="gameTitleNav">أشباح نوفمبر</span>
+                     <a href="#home" aria-label="العودة إلى الصفحة الرئيسية">
+                         <img src="https://i.ibb.co/PvR4fjsN/tgon-Title.png" alt="شعار لعبة أشباح نوفمبر" class="navbar-logo-small" data-lang-key="heroLogoImageAltSmall">
+                     </a>
                 </div>
+
+                <div class="music-toggle-button" id="music-toggle-button">
+                    <i class="fas fa-volume-up"></i>
+                </div>
+
                 <div class="hidden md:flex space-x-6 rtl:space-x-reverse items-center">
                     <a href="#home" class="nav-link" data-lang-key="navHome">الرئيسية</a>
                     <a href="#about" class="nav-link" data-lang-key="navAbout">عن اللعبة</a>
@@ -326,13 +371,14 @@
                     <a href="#media" class="nav-link" data-lang-key="navMedia">الوسائط</a>
                     <a href="#support" class="nav-link" data-lang-key="navSupport">الدعم</a>
                     <a href="#news" class="nav-link" data-lang-key="navNews">الأخبار</a>
-                     <div class="language-switcher">
+                     <a href="#contact" class="nav-link" data-lang-key="navContact">اتصل بنا</a> <div class="language-switcher">
                         <select id="language-select" aria-label="Language selector">
                             <option value="ar">العربية</option>
                             <option value="en">English</option>
                         </select>
                     </div>
                 </div>
+
                 <div class="md:hidden flex items-center">
                      <div class="language-switcher mr-4 rtl:ml-4 rtl:mr-0">
                         <select id="language-select-mobile" aria-label="Language selector mobile">
@@ -356,7 +402,7 @@
                 <li><a href="#media" class="block px-3 py-2 rounded-md text-base font-medium nav-link" data-lang-key="navMediaMobile">الوسائط</a></li>
                 <li><a href="#support" class="block px-3 py-2 rounded-md text-base font-medium nav-link" data-lang-key="navSupportMobile">الدعم</a></li>
                 <li><a href="#news" class="block px-3 py-2 rounded-md text-base font-medium nav-link" data-lang-key="navNewsMobile">الأخبار</a></li>
-            </ul>
+                 <li><a href="#contact" class="block px-3 py-2 rounded-md text-base font-medium nav-link" data-lang-key="navContactMobile">اتصل بنا</a></li> </ul>
         </div>
     </nav>
 
@@ -519,38 +565,38 @@
                         </div>
                     </div>
                     <div class="stagger-animation">
-                        <h3 class="sub-section-title font-heading fade-in" data-animate-delay="2.1s" data-lang-key="mediaWeaponsTitle">الاسلحة المستعملة</h3>
+                        <h3 class="sub-section-title font-heading fade-in" data-animate-delay="3.0s" data-lang-key="mediaWeaponsTitle">الاسلحة المستعملة</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4 stagger-animation">
-                            <div class="gallery-item scale-in" data-animate-delay="2.2s"><img src="https://i.ibb.co/R4YzkPB9/Screenshot-2024-02-11-224339.png" alt="لقطة شاشة سلاح 1" data-lang-key="altWeaponScreenshot1"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="2.3s"><img src="https://i.ibb.co/mV78hdPs/Screenshot-2024-02-11-224914.png" alt="لقطة شاشة سلاح 2" data-lang-key="altWeaponScreenshot2"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="2.4s"><img src="https://i.ibb.co/b55Z4PcY/Screenshot-2024-02-11-224944.png" alt="لقطة شاشة سلاح 3" data-lang-key="altWeaponScreenshot3"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="2.5s"><img src="https://i.ibb.co/5xc7mthx/Screenshot-2024-02-17-011132.png" alt="لقطة شاشة سلاح 4" data-lang-key="altWeaponScreenshot4"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="2.6s"><img src="https://i.ibb.co/fYdHsLC6/Screenshot-2024-02-17-011238.png" alt="لقطة شاشة سلاح 5" data-lang-key="altWeaponScreenshot5"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="2.7s"><img src="https://i.ibb.co/C3y9YdjF/Screenshot-2024-02-17-011323.png" alt="لقطة شاشة سلاح 6" data-lang-key="altWeaponScreenshot6"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="2.8s"><img src="https://i.ibb.co/2fg8Mdt/Screenshot-2024-02-17-011424.png" alt="لقطة شاشة سلاح 7" data-lang-key="altWeaponScreenshot7"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="2.9s"><img src="https://i.ibb.co/qYBWRy1x/Screenshot-2024-10-20-020601.png" alt="لقطة شاشة سلاح 8" data-lang-key="altWeaponScreenshot8"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="3.1s"><img src="https://i.ibb.co/R4YzkPB9/Screenshot-2024-02-11-224339.png" alt="لقطة شاشة سلاح 1" data-lang-key="altWeaponScreenshot1"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="3.2s"><img src="https://i.ibb.co/mV78hdPs/Screenshot-2024-02-11-224914.png" alt="لقطة شاشة سلاح 2" data-lang-key="altWeaponScreenshot2"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="3.3s"><img src="https://i.ibb.co/b55Z4PcY/Screenshot-2024-02-11-224944.png" alt="لقطة شاشة سلاح 3" data-lang-key="altWeaponScreenshot3"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="3.4s"><img src="https://i.ibb.co/5xc7mthx/Screenshot-2024-02-17-011132.png" alt="لقطة شاشة سلاح 4" data-lang-key="altWeaponScreenshot4"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="3.5s"><img src="https://i.ibb.co/fYdHsLC6/Screenshot-2024-02-17-011238.png" alt="لقطة شاشة سلاح 5" data-lang-key="altWeaponScreenshot5"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="3.6s"><img src="https://i.ibb.co/C3y9YdjF/Screenshot-2024-02-17-011323.png" alt="لقطة شاشة سلاح 6" data-lang-key="altWeaponScreenshot6"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="3.7s"><img src="https://i.ibb.co/2fg8Mdt/Screenshot-2024-02-17-011424.png" alt="لقطة شاشة سلاح 7" data-lang-key="altWeaponScreenshot7"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="3.8s"><img src="https://i.ibb.co/qYBWRy1x/Screenshot-2024-10-20-020601.png" alt="لقطة شاشة سلاح 8" data-lang-key="altWeaponScreenshot8"></div>
                         </div>
                     </div>
                     <div class="stagger-animation">
-                        <h3 class="sub-section-title font-heading fade-in" data-animate-delay="3.0s" data-lang-key="mediaLevelsTitle">المستويات</h3>
+                        <h3 class="sub-section-title font-heading fade-in" data-animate-delay="3.9s" data-lang-key="mediaLevelsTitle">المستويات</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4 stagger-animation">
-                            <div class="gallery-item scale-in" data-animate-delay="3.1s"><img src="https://i.ibb.co/yDbn113/Screenshot-2024-02-26-230418-processed.png" alt="لقطة شاشة مستوى 1" data-lang-key="altLevelScreenshot1"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="3.2s"><img src="https://i.ibb.co/q3cwQ8WG/Screenshot-2024-02-26-230642-processed.png" alt="لقطة شاشة مستوى 2" data-lang-key="altLevelScreenshot2"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="3.3s"><img src="https://i.ibb.co/V05tLwnn/Screenshot-2024-02-28-083607-processed.png" alt="لقطة شاشة مستوى 3" data-lang-key="altLevelScreenshot3"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="3.4s"><img src="https://i.ibb.co/SXQtRR3k/Screenshot-2024-02-28-083649-processed.png" alt="لقطة شاشة مستوى 4" data-lang-key="altLevelScreenshot4"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="3.5s"><img src="https://i.ibb.co/XkNCM0qm/Screenshot-2024-03-31-082049-processed.png" alt="لقطة شاشة مستوى 5" data-lang-key="altLevelScreenshot5"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="3.6s"><img src="https://i.ibb.co/kVhFrNs5/Screenshot-2024-04-15-231758-processed.png" alt="لقطة شاشة مستوى 6" data-lang-key="altLevelScreenshot6"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="3.7s"><img src="https://i.ibb.co/1G5g3d0p/Screenshot-2024-04-15-232629-processed.png" alt="لقطة شاشة مستوى 7" data-lang-key="altLevelScreenshot7"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="3.8s"><img src="https://i.ibb.co/4gKmbB3X/Screenshot-2024-04-15-232933-processed.png" alt="لقطة شاشة مستوى 8" data-lang-key="altLevelScreenshot8"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="3.9s"><img src="https://i.ibb.co/HpHfBR1c/Screenshot-2024-04-15-233400-processed.png" alt="لقطة شاشة مستوى 9" data-lang-key="altLevelScreenshot9"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="4.0s"><img src="https://i.ibb.co/L28hX3w/Screenshot-2024-04-15-233519-processed.png" alt="لقطة شاشة مستوى 10" data-lang-key="altLevelScreenshot10"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="4.1s"><img src="https://i.ibb.co/Pv66qWHM/Screenshot-2024-04-17-005728-processed.png" alt="لقطة شاشة مستوى 11" data-lang-key="altLevelScreenshot11"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="4.2s"><img src="https://i.ibb.co/pBV3zD3q/Screenshot-2024-07-08-193135-processed.png" alt="لقطة شاشة مستوى 12" data-lang-key="altLevelScreenshot12"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="4.3s"><img src="https://i.ibb.co/gZDc36fv/Screenshot-2024-07-08-193200-processed.png" alt="لقطة شاشة مستوى 13" data-lang-key="altLevelScreenshot13"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="4.4s"><img src="https://i.ibb.co/Wvk6g5nt/Screenshot-2024-10-20-014617-processed.png" alt="لقطة شاشة مستوى 14" data-lang-key="altLevelScreenshot14"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="4.5s"><img src="https://i.ibb.co/N4BJQxC/Screenshot-2025-05-17-214514-processed.png" alt="لقطة شاشة مستوى 15" data-lang-key="altLevelScreenshot15"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="4.6s"><img src="https://i.ibb.co/RGVVJ7Nf/Screenshot-2025-05-17-214601-processed.png" alt="لقطة شاشة مستوى 16" data-lang-key="altLevelScreenshot16"></div>
-                            <div class="gallery-item scale-in" data-animate-delay="4.7s"><img src="https://i.ibb.co/21nLL2c0/Screenshot-2025-05-17-214717-processed.png" alt="لقطة شاشة مستوى 17" data-lang-key="altLevelScreenshot17"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.0s"><img src="https://i.ibb.co/yDbn113/Screenshot-2024-02-26-230418-processed.png" alt="لقطة شاشة مستوى 1" data-lang-key="altLevelScreenshot1"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.1s"><img src="https://i.ibb.co/q3cwQ8WG/Screenshot-2024-02-26-230642-processed.png" alt="لقطة شاشة مستوى 2" data-lang-key="altLevelScreenshot2"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.2s"><img src="https://i.ibb.co/V05tLwnn/Screenshot-2024-02-28-083607-processed.png" alt="لقطة شاشة مستوى 3" data-lang-key="altLevelScreenshot3"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.3s"><img src="https://i.ibb.co/SXQtRR3k/Screenshot-2024-02-28-083649-processed.png" alt="لقطة شاشة مستوى 4" data-lang-key="altLevelScreenshot4"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.4s"><img src="https://i.ibb.co/XkNCM0qm/Screenshot-2024-03-31-082049-processed.png" alt="لقطة شاشة مستوى 5" data-lang-key="altLevelScreenshot5"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.5s"><img src="https://i.ibb.co/kVhFrNs5/Screenshot-2024-04-15-231758-processed.png" alt="لقطة شاشة مستوى 6" data-lang-key="altLevelScreenshot6"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.6s"><img src="https://i.ibb.co/1G5g3d0p/Screenshot-2024-04-15-232629-processed.png" alt="لقطة شاشة مستوى 7" data-lang-key="altLevelScreenshot7"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.7s"><img src="https://i.ibb.co/4gKmbB3X/Screenshot-2024-04-15-232933-processed.png" alt="لقطة شاشة مستوى 8" data-lang-key="altLevelScreenshot8"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.8s"><img src="https://i.ibb.co/HpHfBR1c/Screenshot-2024-04-15-233400-processed.png" alt="لقطة شاشة مستوى 9" data-lang-key="altLevelScreenshot9"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="4.9s"><img src="https://i.ibb.co/L28hX3w/Screenshot-2024-04-15-233519-processed.png" alt="لقطة شاشة مستوى 10" data-lang-key="altLevelScreenshot10"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="5.0s"><img src="https://i.ibb.co/Pv66qWHM/Screenshot-2024-04-17-005728-processed.png" alt="لقطة شاشة مستوى 11" data-lang-key="altLevelScreenshot11"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="5.1s"><img src="https://i.ibb.co/pBV3zD3q/Screenshot-2024-07-08-193135-processed.png" alt="لقطة شاشة مستوى 12" data-lang-key="altLevelScreenshot12"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="5.2s"><img src="https://i.ibb.co/gZDc36fv/Screenshot-2024-07-08-193200-processed.png" alt="لقطة شاشة مستوى 13" data-lang-key="altLevelScreenshot13"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="5.3s"><img src="https://i.ibb.co/Wvk6g5nt/Screenshot-2024-10-20-014617-processed.png" alt="لقطة شاشة مستوى 14" data-lang-key="altLevelScreenshot14"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="5.4s"><img src="https://i.ibb.co/N4BJQxC/Screenshot-2025-05-17-214514-processed.png" alt="لقطة شاشة مستوى 15" data-lang-key="altLevelScreenshot15"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="5.5s"><img src="https://i.ibb.co/RGVVJ7Nf/Screenshot-2025-05-17-214601-processed.png" alt="لقطة شاشة مستوى 16" data-lang-key="altLevelScreenshot16"></div>
+                            <div class="gallery-item scale-in" data-animate-delay="5.6s"><img src="https://i.ibb.co/21nLL2c0/Screenshot-2025-05-17-214717-processed.png" alt="لقطة شاشة مستوى 17" data-lang-key="altLevelScreenshot17"></div>
                         </div>
                     </div>
                 </div>
@@ -608,6 +654,39 @@
                 </div>
             </div>
         </section>
+
+         <section id="contact" class="section section-darker">
+            <div class="container mx-auto px-6 relative z-10">
+                <h2 class="section-title font-heading animate-on-scroll" data-lang-key="contactTitle">اتصل بنــا</h2>
+                <div class="divider-line animate-on-scroll" style="animation-delay: 0.2s;"></div>
+                <div class="max-w-2xl mx-auto stagger-animation">
+                     <div class="content-card fade-in" data-animate-delay="0.3s">
+                        <p class="text-lg md:text-xl text-[var(--text-muted)] leading-loose mb-8" data-lang-key="contactText">
+                            إذا كان لديك أي أسئلة، اقتراحات، أو ملاحظات، يرجى التواصل معنا عبر النموذج أدناه.
+                        </p>
+                        <form action="mailto:abdoup4@gmail.com" method="post" enctype="text/plain" class="contact-form">
+                            <div class="mb-4">
+                                <label for="name" class="block text-[var(--color-text-medium)] text-sm font-bold mb-2" data-lang-key="contactName">الاسم:</label>
+                                <input type="text" id="name" name="name" class="w-full px-3 py-2 text-gray-300 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]" data-lang-key="contactNamePlaceholder">
+                            </div>
+                            <div class="mb-4">
+                                <label for="email" class="block text-[var(--color-text-medium)] text-sm font-bold mb-2" data-lang-key="contactEmail">البريد الإلكتروني:</label>
+                                <input type="email" id="email" name="email" class="w-full px-3 py-2 text-gray-300 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]" data-lang-key="contactEmailPlaceholder">
+                            </div>
+                            <div class="mb-4">
+                                <label for="message" class="block text-[var(--color-text-medium)] text-sm font-bold mb-2" data-lang-key="contactMessage">الرسالة/الملاحظات:</label>
+                                <textarea id="message" name="message" rows="6" class="w-full px-3 py-2 text-gray-300 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]" data-lang-key="contactMessagePlaceholder"></textarea>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary text-lg" data-lang-key="contactSendBtn">إرسال الرسالة</button>
+                            </div>
+                        </form>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+
     </main>
 
     <footer class="footer text-[var(--text-muted)] py-16 border-t border-gray-800 fade-in">
@@ -643,22 +722,25 @@
                 pageTitle: "أشباح نوفمبر - الموقع الرسمي",
                 gameTitleNav: "أشباح نوفمبر",
                 heroLogoImageAlt: "شعار لعبة أشباح نوفمبر",
+                heroLogoImageAltSmall: "شعار لعبة أشباح نوفمبر صغير", /* Added translation key for small logo */
                 navHome: "الرئيسية",
-                navAbout: "عن اللعبة",
+                navAbout: "عن الل", // Shortened for Arabic
                 navFeatures: "الميزات",
                 navStages: "المراحل",
                 navProduction: "الإنتاج",
                 navMedia: "الوسائط",
                 navSupport: "الدعم",
                 navNews: "الأخبار",
+                navContact: "اتصل بنا", // Added Contact translation
                 navHomeMobile: "الرئيسية",
-                navAboutMobile: "عن اللعبة",
+                navAboutMobile: "عن الل", // Shortened for Arabic mobile
                 navFeaturesMobile: "الميزات",
                 navStagesMobile: "المراحل",
                 navProductionMobile: "الإنتاج",
                 navMediaMobile: "الوسائط",
                 navSupportMobile: "الدعم",
                 navNewsMobile: "الأخبار",
+                navContactMobile: "اتصل بنا", // Added Contact translation mobile
                 heroSubtitle: "\"أشباح نوفمبر\" تغمر اللاعبين في قلب ثورة التحرير الجزائرية. كبطل مقاوم، حرر أرضك من الاستعمار الفرنسي.",
                 devStatus: "(اللعبة قيد التطوير حاليًا)",
                 heroBtnSupport: "دعم المشروع",
@@ -695,7 +777,7 @@
                 interviewSupportTitle: "بين الدعم المعنوي وتحديات الواقع: مسيرة مطور عصامي",
                 interviewSupportContent: "بدأ المشروع في سرية تامة، لكن بعد الكشف عن الفيديو التسويقي، حظي بإعجاب ودعم معنوي كبير من الأهل والأصدقاء وحتى من ثلاث وزارات جزائرية، بما في ذلك وزارة المجاهدين. ورغم هذا الدعم المعنوي المشرف، لا يزال عبد الحق يواجه تحديات مادية ونقصًا في المعدات اللازمة لتسريع وتيرة العمل، مما يعكس واقع صناعة الألعاب الناشئة في الجزائر.",
                 interviewGameDetailsTitle: "في قلب المعركة: تكتيك، تسلل، وشخصيات خالدة",
-                interviewGameDetailsContent: "\"أشباح نوفمبر\" هي لعبة حرب تعتمد على مزيج من التكتيك والتسلل، محاكية لمعارك وأحداث محورية في الثورة. ستغمر اللعبة اللاعبين في بيئات متنوعة من القصبة العريقة والأوراس الشامخة إلى خط موريس ومناطق في العاصمة وعنابة والقبائل. كما ستسلط الضوء على شخصيات وطنية خالدة مثل العربي بن مهيدي ومصطفى بن بولعيد وهواري بومدين وزيغود يوسف، مجسدة إسهاماتهم في تحرير الوطن.",
+                interviewGameDetailsContent: "أشباح نوفمبر\" هي لعبة حرب تعتمد على مزيج من التكتيك والتسلل، محاكية لمعارك وأحداث محورية في الثورة. ستغمر اللعبة اللاعبين في بيئات متنوعة من القصبة العريقة والأوراس الشامخة إلى خط موريس ومناطق في العاصمة وعنابة والقبائل. كما ستسلط الضوء على شخصيات وطنية خالدة مثل العربي بن مهيدي ومصطفى بن بولعيد وهواري بومدين وزيغود يوسف، مجسدة إسهاماتهم في تحرير الوطن.",
                 interviewMusicTitle: "أصالة موسيقية: ألحان جزائرية تروي قصص البطولة",
                 interviewMusicContent: "لإثراء التجربة الحسية، يولي عبد الحق اهتمامًا خاصًا للموسيقى التصويرية. بجانب موسيقى الشاوية المميزة التي ظهرت في الفيديو التسويقي، ستتضمن اللعبة أنماطًا موسيقية جزائرية متنوعة أخرى مثل المديح والشعر والملحون، التي تحمل في طياتها قصص الثورة ومعاناة الشعب الجزائري أبان الاستعمار، لتضفي عمقًا وأصالة على أجواء اللعبة.",
                 interviewPlatformTitle: "في متناول الجميع: الإطلاق على ستيم واللعب بدون إنترنت",
@@ -775,6 +857,15 @@
                 supportArticleContent2: "كل مساهمة، مهما كانت صغيرة، تحدث فرقًا كبيرًا في تحقيق هذا الحلم. كن جزءًا من هذه الرحلة التاريخية وادعم \"أشباح نوفمبر\" لتصبح شهادة حية على الصمود والبطولة.",
                 supportBtn: "ادعم المشروع الآن!",
                 supportNotificationText: "ادعم المشروع الآن!",
+                contactTitle: "اتصل بنــا", // Added Contact translation
+                contactText: "إذا كان لديك أي أسئلة، اقتراحات، أو ملاحظات، يرجى التواصل معنا عبر النموذج أدناه.", // Added Contact translation
+                contactName: "الاسم:", // Added Contact translation
+                contactNamePlaceholder: "أدخل اسمك", // Added Contact translation
+                contactEmail: "البريد الإلكتروني:", // Added Contact translation
+                contactEmailPlaceholder: "أدخل بريدك الإلكتروني", // Added Contact translation
+                contactMessage: "الرسالة/الملاحظات:", // Added Contact translation
+                contactMessagePlaceholder: "اكتب رسالتك هنا...", // Added Contact translation
+                contactSendBtn: "إرسال الرسالة", // Added Contact translation
                 footerGameTitle: "أشبــاح نوفمــبر",
                 footerDeveloper: "لعبة من تطوير استوديوهات عبد الحق شابي.",
                 footerCopyright: "© 2025 استوديوهات عبد الحق شابي. جميع الحقوق محفوظة.",
@@ -786,22 +877,25 @@
                 pageTitle: "The Ghosts of November - Official Website",
                 gameTitleNav: "The Ghosts of November",
                 heroLogoImageAlt: "The Ghosts of November game logo",
+                 heroLogoImageAltSmall: "Small The Ghosts of November game logo", /* Added translation key for small logo */
                 navHome: "Home",
-                navAbout: "About Game",
+                navAbout: "About G", // Shortened for English
                 navFeatures: "Features",
                 navStages: "Stages",
                 navProduction: "Production",
                 navMedia: "Media",
                 navSupport: "Support",
                 navNews: "News",
+                navContact: "Contact Us", // Added Contact translation
                 navHomeMobile: "Home",
-                navAboutMobile: "About Game",
+                navAboutMobile: "About G", // Shortened for English mobile
                 navFeaturesMobile: "Features",
                 navStagesMobile: "Stages",
                 navProductionMobile: "Production",
                 navMediaMobile: "Media",
                 navSupportMobile: "Support",
                 navNewsMobile: "News",
+                navContactMobile: "Contact Us", // Added Contact translation mobile
                 heroSubtitle: "\"The Ghosts of November\" immerses players in the heart of the Algerian War of Independence. As a resistance hero, liberate your land from French colonialism.",
                 devStatus: "(Game currently under development)",
                 heroBtnSupport: "Support the Project",
@@ -828,11 +922,11 @@
                 productionTitle: "Behind the Scenes: An Indie Developer's Journey",
                 developerInterviewTitle: "Interview with Indie Developer Abdelhak Chabbi",
                 developerInterviewSource: "Source: Al-Siyahi Newspaper",
-                developerInterviewIntro: "In the heart of Annaba city, driven by a passion for games and the history of a great nation, Abdelhak Chabbi, a 30-year-old Algerian, emerges as the driving force behind the game \"The Ghosts of November\". This game is not just entertainment; it is a living digital testament to the bravery of the Algerian War of Independence against French colonialism (1830-1962).",
+                developerInterviewIntro: "In the heart of Annaba city, and from a passion for games and the history of a great homeland, Abdelhak Chabbi, a 30-year-old Algerian young man, emerges as the driving force behind the game \"The Ghosts of November\". This game is not just entertainment, but a living digital testimony to the bravery of the Algerian War of Independence against French colonialism (1830-1962).",
                 interviewGoalTitle: "A Vision Beyond Gaming: Correcting the Image and Strengthening Identity",
-                interviewGoalContent: "Designing \"The Ghosts of November\" was not just a passing project for Abdelhak; it was a response to a deep sense of responsibility. Abdelhak noticed how some Western games distort the image of Arabs and Muslims, portraying them as villains and terrorists. From this, a strong desire was born in him to use the medium of games to correct these misconceptions and present the ancient Algerian history and culture to the world in an impactful and engaging way. His ultimate goal is to instill love of the homeland in the hearts of young people and revive the memory of the glorious revolution.",
+                interviewGoalContent: "Designing \"The Ghosts of November\" was not just a passing project for Abdelhak; it was a response to a deep sense of responsibility. Abdelhak noticed how some Western games distort the image of Arabs and Muslims, portraying them as villains and terrorists. From this, a strong desire was born in him to use the medium of games to correct these misconceptions and present the ancient Algerian history and culture to the world in an impactful and engaging way. His ultimate goal is to instill love of the homeland in the hearts of youth and revive the memory of the glorious revolution.",
                 interviewBeginningTitle: "A Journey of Learning and Determination: From Internet Cafe to 3D Development World",
-                interviewBeginningContent: "Abdelhak's journey into the world of design and programming began at the internet cafe he manages. Spending most of his time in front of the computer, his talent and passion for game development grew. Over eight years, he delved into continuous self-learning and research online, acquiring skills in programming and 3D design. English was his main weapon to overcome the scarcity of Arabic educational resources in this field and to build relationships with professional foreign developers to benefit from their experiences and techniques.",
+                interviewBeginningContent: "Abdelhak's journey into the world of design and programming began at the internet cafe he manages. By spending most of his time in front of the computer, his talent and passion for game development grew. Over eight years, he delved into continuous self-learning and research online, acquiring skills in programming and 3D design. The English language was his main tool to overcome the scarcity of Arabic educational resources in this field and to build relationships with professional foreign developers to benefit from their experiences and techniques.",
                 interviewDevelopmentToolsTitle: "Modern Tools for Narrating Ancient History: Unreal Engine 5 and Blender",
                 interviewDevelopmentToolsContent: "To bring his vision to life, Abdelhak relies on the latest technologies in the world of game development. The game is designed using the powerful Unreal Engine 5, and he uses tools like Blender for 3D design, in addition to modern assets and plugins, reflecting the production quality he aspires to as an indie developer.",
                 interviewSupportTitle: "Between Moral Support and Reality Challenges: The Journey of a Self-Made Developer",
@@ -842,11 +936,11 @@
                 interviewMusicTitle: "Musical Authenticity: Algerian Melodies Narrating Stories of Heroism",
                 interviewMusicContent: "To enrich the sensory experience, Abdelhak pays special attention to the soundtrack. Besides the distinctive Chaoui music featured in the promotional video, the game will include other diverse Algerian musical styles such as Madih, poetry, and Malhoun, which carry within them the stories of the revolution and the suffering of the Algerian people during colonialism, adding depth and authenticity to the game's atmosphere.",
                 interviewPlatformTitle: "Accessible to All: Launching on Steam and Offline Play",
-                interviewPlatformContent: "\"The Ghosts of November\" will be launched on the popular Steam platform for PC, making it accessible to a wide audience. Abdelhak plans to release it at a modest price yet to be determined, believing in the importance of the game reaching as many players as possible. Among the practical features, the game does not require an internet connection to play, allowing for a smooth and accessible experience anytime, anywhere.",
+                interviewPlatformContent: "The Ghosts of November\" will be launched on the popular Steam platform for PC, making it accessible to a wide audience. Abdelhak plans to release it at a low price, which has not yet been determined, believing in the importance of the game reaching as many players as possible. One of the practical features is that the game does not require an internet connection to play, allowing for a smooth and accessible experience anytime, anywhere.",
                 interviewReleaseTitle: "Awaited Launch: A Dream Embodied in the Anniversary of the Revolution",
                 interviewReleaseContent: "The official release date of the game is still to be determined and is directly linked to the availability of necessary assistance and equipment to accelerate the pace of work. Despite the challenges, Abdelhak has great hope of launching the game on the anniversary of the glorious revolution, if not this year precisely, to present his work as a tribute to the martyrs of the homeland and its great history.",
                 interviewChallengesTitle: "Pioneering Challenges: Building the Game Industry in Algeria and the Arab World",
-                interviewChallengesContent: "Abdelhak faces significant challenges as the game and software industry is still in its early stages in Algeria and the Arab world. This lack of attention and support has created difficulty in finding specialized educational resources in Arabic. However, his determination pushed him to learn English, which became his tool to communicate with international developers, acquire modern techniques, and develop his programming intelligence, becoming a pioneer in this field through his self-efforts.",
+                interviewChallengesContent: "Abdelhak faces significant challenges as the game and software industry is still in its early stages in Algeria and the Arab world. This lack of attention and support has created difficulty in finding specialized educational resources in Arabic. But his determination pushed him to learn English, which became his tool to communicate with international developers, acquire modern techniques, and develop his programming intelligence, becoming a pioneer in this field through his self-efforts.",
                 interviewFutureTitle: "Ambitions Beyond the Game: A Studio for Historical and Civilizational Films",
                 interviewFutureContent: "Abdelhak's ambitions do not stop at developing \"The Ghosts of November\". He aspires to be embraced by the authorities and provided with the necessary support to develop this field in Algeria. His biggest dream is to establish a specialized studio not only in game development but also in producing special historical films that highlight Arab culture and Islamic history, to provide meaningful and impactful content to the world.",
                 thankYouReading: "Thank you for reading!!!",
@@ -918,6 +1012,15 @@
                 supportArticleContent2: "Every contribution, no matter how small, makes a big difference in achieving this dream. Be a part of this historical journey and support \"The Ghosts of November\" to become a living testament to resilience and heroism.",
                 supportBtn: "Support the Project Now!",
                 supportNotificationText: "Support the Project Now!",
+                contactTitle: "Contact Us", // Added Contact translation
+                contactText: "If you have any questions, suggestions, or feedback, please contact us using the form below.", // Added Contact translation
+                contactName: "Name:", // Added Contact translation
+                contactNamePlaceholder: "Enter your name", // Added Contact translation
+                contactEmail: "Email:", // Added Contact translation
+                contactEmailPlaceholder: "Enter your email", // Added Contact translation
+                contactMessage: "Message/Feedback:", // Added Contact translation
+                contactMessagePlaceholder: "Write your message here...", // Added Contact translation
+                contactSendBtn: "Send Message", // Added Contact translation
                 footerGameTitle: "The Ghosts of November",
                 footerDeveloper: "A game developed by Abdelhak Chabbi Studios.",
                 footerCopyright: "© 2025 Abdelhak Chabbi Studios. All rights reserved.",
@@ -941,15 +1044,28 @@
 
             document.querySelectorAll('[data-lang-key]').forEach(element => {
                 const key = element.getAttribute('data-lang-key');
-                const translation = translations[lang]?.[key] || translations.ar[key] || element.textContent;
+                // Fallback to Arabic if the specific language translation is missing
+                const translation = translations[lang]?.[key] || translations.ar[key];
 
-                // Handle specific element types
-                if (element.tagName === 'IMG' && key.startsWith('alt')) {
-                    element.alt = translation;
-                } else if (key.endsWith('List')) {
-                    element.innerHTML = translation; // Use innerHTML for lists
+                if (translation !== undefined) { // Only apply if a translation exists
+                    if (element.tagName === 'IMG' && key.startsWith('alt')) {
+                        element.alt = translation;
+                    } else if (key.endsWith('List')) {
+                        element.innerHTML = translation; // Use innerHTML for lists
+                    } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                        // Handle placeholder text specifically for input/textarea
+                        if (key.endsWith('Placeholder')) {
+                            element.placeholder = translation;
+                        }
+                        // Do NOT set textContent or value for INPUT/TEXTAREA themselves
+                    } else {
+                        // For all other elements (H, P, A, LABEL, BUTTON, etc.)
+                        element.textContent = translation;
+                    }
                 } else {
-                    element.textContent = translation; // Use textContent for most elements
+                    // Optional: Handle cases where a key is missing in *both* languages
+                    console.warn(`Translation key "${key}" missing for language "${lang}"`);
+                    // You might choose to keep the element's original text or set a default
                 }
             });
 
