@@ -724,7 +724,7 @@
                 heroLogoImageAlt: "شعار لعبة أشباح نوفمبر",
                 heroLogoImageAltSmall: "شعار لعبة أشباح نوفمبر صغير", /* Added translation key for small logo */
                 navHome: "الرئيسية",
-                navAbout: "عن الل", // Shortened for Arabic
+                navAbout: "عن اللعبة", // Shortened for Arabic
                 navFeatures: "الميزات",
                 navStages: "المراحل",
                 navProduction: "الإنتاج",
@@ -879,7 +879,7 @@
                 heroLogoImageAlt: "The Ghosts of November game logo",
                  heroLogoImageAltSmall: "Small The Ghosts of November game logo", /* Added translation key for small logo */
                 navHome: "Home",
-                navAbout: "About G", // Shortened for English
+                navAbout: "About Game", // Shortened for English
                 navFeatures: "Features",
                 navStages: "Stages",
                 navProduction: "Production",
@@ -888,7 +888,7 @@
                 navNews: "News",
                 navContact: "Contact Us", // Added Contact translation
                 navHomeMobile: "Home",
-                navAboutMobile: "About G", // Shortened for English mobile
+                navAboutMobile: "About Game", // Shortened for English mobile
                 navFeaturesMobile: "Features",
                 navStagesMobile: "Stages",
                 navProductionMobile: "Production",
