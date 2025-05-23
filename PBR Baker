@@ -1,0 +1,1269 @@
+# Part 1: Core Setup and Properties
+
+bl_info = {
+    "name": "PBR Baker Pro",
+    "author": "Your Name",
+    "version": (1, 0),
+    "blender": (3, 0, 0),
+    "location": "View3D > Sidebar > PBR Baker",
+    "description": "Complete PBR texture baker with advanced features",
+    "category": "Material",
+}
+import time
+import datetime
+import bpy
+import os
+from pathlib import Path
+import json
+from bpy.props import (
+    EnumProperty, IntProperty, BoolProperty, 
+    StringProperty, PointerProperty, FloatProperty,
+    FloatVectorProperty
+)
+from bpy.types import Operator, Panel, PropertyGroup
+
+
+class BakerSettings(PropertyGroup):
+    # Bake Settings
+    resolution: IntProperty(
+        name="Resolution",
+        description="Texture resolution in pixels",
+        default=2048,
+        min=32,
+        max=8192
+    )
+    samples: IntProperty(
+        name="Samples",
+        description="Number of samples for baking",
+        default=32,
+        min=1,
+        max=1024
+    )
+    margin: IntProperty(
+        name="Margin",
+        description="Bake margin in pixels",
+        default=16,
+        min=0,
+        max=64
+    )
+    ray_distance: FloatProperty(
+        name="Ray Distance",
+        description="Maximum ray distance for baking",
+        default=0.1,
+        min=0.0,
+        max=1.0
+    )
+    
+    # UV Unwrap Settings
+    unwrap_method: EnumProperty(
+        name="Unwrap Method",
+        description="Method used for UV unwrapping",
+        items=[
+            ('SMART', "Smart", "Smart UV Project"),
+            ('ANGLE', "Angle Based", "Angle Based Unwrap"),
+            ('CONFORMAL', "Conformal", "Conformal Unwrap")
+        ],
+        default='SMART'
+    )
+    auto_seams: BoolProperty(
+        name="Auto Seams",
+        description="Automatically detect and mark seams",
+        default=True
+    )
+    seam_angle: FloatProperty(
+        name="Seam Angle",
+        description="Angle threshold for automatic seam detection",
+        default=30.0,
+        min=0.0,
+        max=180.0
+    )
+    optimize_islands: BoolProperty(
+        name="Optimize Islands",
+        description="Optimize UV island layout",
+        default=True
+    )
+    align_islands: BoolProperty(
+        name="Align Islands",
+        description="Align UV islands to axes",
+        default=True
+    )
+    normalize_uvs: BoolProperty(
+        name="Normalize UVs",
+        description="Normalize UV coordinates",
+        default=True
+    )
+    uv_angle_limit: FloatProperty(
+        name="Angle Limit",
+        description="Angle limit for Smart UV Project",
+        default=66.0,
+        min=1.0,
+        max=89.0
+    )
+    uv_margin: FloatProperty(
+        name="Island Margin",
+        description="Margin between UV islands",
+        default=0.02,
+        min=0.0,
+        max=1.0
+    )
+    uv_area_weight: FloatProperty(
+        name="Area Weight",
+        description="Area weight for Smart UV Project",
+        default=1.0,
+        min=0.0,
+        max=1.0
+    )
+    use_selected_faces: BoolProperty(
+        name="Selected Faces Only",
+        description="Unwrap selected faces only",
+        default=False
+    )
+
+
+
+def debug_log(message):
+    print(f"[PBR Baker Pro] {message}")
+
+class BAKER_PG_Settings(PropertyGroup):
+    # Basic Settings
+    
+    
+        # Add these new properties
+    unwrap_method: EnumProperty(
+        name="Unwrap Method",
+        description="Method used for UV unwrapping",
+        items=[
+            ('SMART', "Smart", "Smart UV Project"),
+            ('ANGLE', "Angle Based", "Angle Based Unwrap"),
+            ('CONFORMAL', "Conformal", "Conformal Unwrap")
+        ],
+        default='SMART'
+    )
+    auto_seams: BoolProperty(
+        name="Auto Seams",
+        description="Automatically detect and mark seams",
+        default=True
+    )
+    seam_angle: FloatProperty(
+        name="Seam Angle",
+        description="Angle threshold for automatic seam detection",
+        default=30.0,
+        min=0.0,
+        max=180.0
+    )
+    optimize_islands: BoolProperty(
+        name="Optimize Islands",
+        description="Optimize UV island layout",
+        default=True
+    )
+    align_islands: BoolProperty(
+        name="Align Islands",
+        description="Align UV islands to axes",
+        default=True
+    )
+    normalize_uvs: BoolProperty(
+        name="Normalize UVs",
+        description="Normalize UV coordinates",
+        default=True
+    )
+    resolution: EnumProperty(
+        name="Resolution",
+        items=[
+            ('512', "512", "512x512 pixels"),
+            ('1024', "1K", "1024x1024 pixels"),
+            ('2048', "2K", "2048x2048 pixels"),
+            ('4096', "4K", "4096x4096 pixels"),
+            ('8192', "8K", "8192x8192 pixels"),
+        ],
+        default='2048',
+    )
+    
+    samples: IntProperty(
+        name="Samples",
+        default=128,
+        min=1,
+        max=4096,
+    )
+    
+    margin: IntProperty(
+        name="Margin",
+        default=16,
+        min=0,
+        max=128,
+    )
+    
+    output_path: StringProperty(
+        name="Output Path",
+        default="//textures/",
+        subtype='DIR_PATH',
+    )
+
+    
+
+    # High-to-Low Poly Settings
+    high_poly: PointerProperty(
+        name="High Poly",
+        type=bpy.types.Object,
+    )
+    
+    low_poly: PointerProperty(
+        name="Low Poly",
+        type=bpy.types.Object,
+    )
+    
+    cage_extrusion: FloatProperty(
+        name="Cage Extrusion",
+        default=0.1,
+        min=0.0,
+        max=1.0
+    )
+    
+    ray_distance: FloatProperty(
+        name="Ray Distance",
+        default=0.5,
+        min=0.0,
+        max=5.0
+    )
+    
+    selected_to_active: BoolProperty(
+        name="Selected to Active",
+        default=True
+    )
+
+    # UV Settings
+    uv_angle_limit: FloatProperty(
+        name="Angle Limit",
+        default=66.0,
+        min=1.0,
+        max=89.0,
+    )
+    
+    uv_margin: FloatProperty(
+        name="UV Margin",
+        default=0.02,
+        min=0.0,
+        max=1.0,
+    )
+    
+    uv_area_weight: FloatProperty(
+        name="Area Weight",
+        default=1.0,
+        min=0.0,
+        max=1.0,
+    )
+    # Bake Maps
+    bake_basecolor: BoolProperty(
+        name="Base Color",
+        default=True,
+        description="Bake base color map"
+    )
+    
+    bake_normal: BoolProperty(
+        name="Normal",
+        default=True,
+        description="Bake normal map"
+    )
+    
+    bake_roughness: BoolProperty(
+        name="Roughness",
+        default=True,
+        description="Bake roughness map"
+    )
+    
+    bake_metallic: BoolProperty(
+        name="Metallic",
+        default=True,
+        description="Bake metallic map"
+    )
+    
+    bake_ao: BoolProperty(
+        name="Ambient Occlusion",
+        default=True,
+        description="Bake ambient occlusion map"
+    )
+    
+    bake_emission: BoolProperty(
+        name="Emission",
+        default=False,
+        description="Bake emission map"
+    )
+    
+    bake_displacement: BoolProperty(
+        name="Displacement",
+        default=False,
+        description="Bake displacement map"
+    )
+    
+    bake_curvature: BoolProperty(
+        name="Curvature",
+        default=False,
+        description="Bake curvature map"
+    )
+    
+    bake_thickness: BoolProperty(
+        name="Thickness",
+        default=False,
+        description="Bake thickness map"
+    )
+    
+    bake_glossiness: BoolProperty(
+        name="Glossiness",
+        default=True,
+        description="Bake glossiness map"
+    )
+
+    # Normal Map Settings
+    normal_space: EnumProperty(
+        name="Normal Space",
+        items=[
+            ('TANGENT', "Tangent", "Tangent space normals"),
+            ('OBJECT', "Object", "Object space normals"),
+            ('WORLD', "World", "World space normals"),
+        ],
+        default='TANGENT',
+    )
+    
+    normal_r: EnumProperty(
+        name="R",
+        items=[
+            ('POS_X', "+X", "Positive X direction"),
+            ('NEG_X', "-X", "Negative X direction"),
+            ('POS_Y', "+Y", "Positive Y direction"),
+            ('NEG_Y', "-Y", "Negative Y direction"),
+            ('POS_Z', "+Z", "Positive Z direction"),
+            ('NEG_Z', "-Z", "Negative Z direction"),
+        ],
+        default='POS_X',
+    )
+    
+    normal_g: EnumProperty(
+        name="G",
+        items=[
+            ('POS_X', "+X", "Positive X direction"),
+            ('NEG_X', "-X", "Negative X direction"),
+            ('POS_Y', "+Y", "Positive Y direction"),
+            ('NEG_Y', "-Y", "Negative Y direction"),
+            ('POS_Z', "+Z", "Positive Z direction"),
+            ('NEG_Z', "-Z", "Negative Z direction"),
+        ],
+        default='POS_Y',
+    )
+    
+    normal_b: EnumProperty(
+        name="B",
+        items=[
+            ('POS_X', "+X", "Positive X direction"),
+            ('NEG_X', "-X", "Negative X direction"),
+            ('POS_Y', "+Y", "Positive Y direction"),
+            ('NEG_Y', "-Y", "Negative Y direction"),
+            ('POS_Z', "+Z", "Positive Z direction"),
+            ('NEG_Z', "-Z", "Negative Z direction"),
+        ],
+        default='POS_Z',
+    )
+
+    # Material Settings
+    material_name: StringProperty(
+        name="Material Name",
+        default="PBR_Material",
+        description="Name for the new PBR material"
+    )
+
+    use_material_prefix: BoolProperty(
+        name="Use Prefix",
+        default=True,
+        description="Add prefix to material name"
+    )
+
+    material_prefix: StringProperty(
+        name="Prefix",
+        default="PBR_",
+        description="Prefix for material names"
+    )
+
+    # Advanced Baking Settings
+    use_selected_faces: BoolProperty(
+        name="Selected Faces Only",
+        default=False,
+        description="Bake only selected faces"
+    )
+
+    use_cage: BoolProperty(
+        name="Use Cage",
+        default=False,
+        description="Use cage mesh for baking"
+    )
+
+    clean_image_nodes: BoolProperty(
+        name="Clean Image Nodes",
+        default=True,
+        description="Remove temporary baking nodes after completion"
+    )
+
+    save_images: BoolProperty(
+        name="Auto-Save Images",
+        default=True,
+        description="Automatically save baked images"
+    )
+
+class BAKER_OT_SmartUV(Operator):
+    bl_idname = "baker.smart_uv"
+    bl_label = "Advanced UV Unwrap"
+    bl_description = "Advanced UV unwrapping with multiple methods and optimization"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        settings = context.scene.baker_settings
+        obj = context.active_object
+
+        if not obj or obj.type != 'MESH':
+            self.report({'ERROR'}, "Select a mesh object")
+            return {'CANCELLED'}
+
+        # Store current state
+        current_mode = obj.mode
+        current_selection = [face.index for face in obj.data.polygons if face.select]
+
+        # Enter edit mode
+        bpy.ops.object.mode_set(mode='EDIT')
+        
+        # Mark seams based on angle
+        if settings.auto_seams:
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.mark_seam(clear=True)
+            bpy.ops.mesh.mark_sharp(clear=True)
+            bpy.ops.mesh.edges_select_sharp(sharpness=settings.seam_angle)
+            bpy.ops.mesh.mark_seam(clear=False)
+
+        # Select faces for unwrapping
+        if settings.use_selected_faces:
+            if not current_selection:
+                self.report({'WARNING'}, "No faces selected, unwrapping entire mesh")
+                bpy.ops.mesh.select_all(action='SELECT')
+        else:
+            bpy.ops.mesh.select_all(action='SELECT')
+
+        # Unwrap based on method
+        if settings.unwrap_method == 'SMART':
+            bpy.ops.uv.smart_project(
+                angle_limit=settings.uv_angle_limit,
+                island_margin=settings.uv_margin,
+                area_weight=settings.uv_area_weight,
+                correct_aspect=True,
+                scale_to_bounds=True
+            )
+        elif settings.unwrap_method == 'ANGLE':
+            bpy.ops.uv.unwrap(
+                method='ANGLE_BASED',
+                margin=settings.uv_margin,
+                correct_aspect=True,
+                use_subsurf_data=False
+            )
+        elif settings.unwrap_method == 'CONFORMAL':
+            bpy.ops.uv.unwrap(
+                method='CONFORMAL',
+                margin=settings.uv_margin,
+                correct_aspect=True,
+                use_subsurf_data=False
+            )
+
+        # UV Island Optimization
+        if settings.optimize_islands:
+            # Average Islands Scale
+            bpy.ops.uv.average_islands_scale()
+            
+            # Pack Islands with rotation
+            bpy.ops.uv.pack_islands(
+                margin=settings.uv_margin,
+                rotate=True,
+                rotate_method='AXIS_ALIGNED'
+            )
+
+        # Align and straighten
+        if settings.align_islands:
+            bpy.ops.uv.align(axis='ALIGN_AUTO')
+
+
+        # Normalize UVs
+        if settings.normalize_uvs:
+            bpy.ops.uv.select_all(action='SELECT')
+            bpy.ops.transform.resize(
+                value=(1, 1, 1), 
+                center_override=(0.5, 0.5, 0)
+            )
+
+        # Restore previous state
+        bpy.ops.object.mode_set(mode=current_mode)
+        if current_selection and settings.use_selected_faces:
+            for face_idx in current_selection:
+                obj.data.polygons[face_idx].select = True
+
+        self.report({'INFO'}, "Advanced UV Unwrap completed")
+        return {'FINISHED'}
+
+    
+    
+class BAKER_OT_SetupHighToLow(Operator):
+    bl_idname = "baker.setup_high_to_low"
+    bl_label = "Setup High-to-Low"
+    bl_description = "Setup high to low poly baking"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def setup_cage_mesh(self, context, low_poly):
+        # Delete existing cage if present
+        for obj in bpy.data.objects:
+            if obj.name.endswith("_cage"):
+                bpy.data.objects.remove(obj, do_unlink=True)
+
+        cage_name = f"{low_poly.name}_cage"
+        cage_mesh = low_poly.data.copy()
+        cage_obj = bpy.data.objects.new(cage_name, cage_mesh)
+        context.collection.objects.link(cage_obj)
+        
+        # Create wireframe material
+        wire_mat = bpy.data.materials.new(name="Cage_Wire")
+        wire_mat.use_nodes = True
+        nodes = wire_mat.node_tree.nodes
+        links = wire_mat.node_tree.links
+        nodes.clear()
+        
+        # Create nodes
+        output = nodes.new('ShaderNodeOutputMaterial')
+        wire = nodes.new('ShaderNodeWireframe')
+        emission = nodes.new('ShaderNodeEmission')
+        mix = nodes.new('ShaderNodeMixShader')
+        transparent = nodes.new('ShaderNodeBsdfTransparent')
+        
+        # Setup nodes
+        wire.use_pixel_size = True
+        wire.inputs['Size'].default_value = 0.01
+        emission.inputs[0].default_value = (0.0, 1.0, 0.0, 1.0)  # Green color
+        emission.inputs[1].default_value = 2.0  # Emission strength
+        
+        # Connect nodes
+        links.new(wire.outputs[0], mix.inputs[0])
+        links.new(emission.outputs[0], mix.inputs[1])
+        links.new(transparent.outputs[0], mix.inputs[2])
+        links.new(mix.outputs[0], output.inputs[0])
+        
+        # Assign material
+        cage_obj.data.materials.append(wire_mat)
+        
+        # Enhanced visibility settings
+        cage_obj.hide_viewport = False
+        cage_obj.hide_render = False
+        cage_obj.display_type = 'WIRE'
+        cage_obj.show_in_front = True
+        cage_obj.show_wire = True
+        cage_obj.show_all_edges = True
+        cage_obj.color = (0.0, 1.0, 0.0, 0.5)
+        
+        # Make cage active and selected
+        bpy.context.view_layer.objects.active = cage_obj
+        cage_obj.select_set(True)
+        
+        # Add modifiers
+        shrinkwrap = cage_obj.modifiers.new(name="Shrinkwrap", type='SHRINKWRAP')
+        shrinkwrap.target = low_poly
+        shrinkwrap.offset = context.scene.baker_settings.cage_extrusion
+        
+        solidify = cage_obj.modifiers.new(name="Solidify", type='SOLIDIFY')
+        solidify.thickness = context.scene.baker_settings.cage_extrusion
+        solidify.offset = 1.0
+        
+        return cage_obj
+
+    def execute(self, context):
+        settings = context.scene.baker_settings
+        
+        if not settings.high_poly or not settings.low_poly:
+            self.report({'ERROR'}, "Select both high and low poly meshes")
+            return {'CANCELLED'}
+
+        # Setup render settings
+        context.scene.render.engine = 'CYCLES'
+        context.scene.cycles.device = 'GPU'
+        context.scene.render.bake.use_selected_to_active = True
+        context.scene.render.bake.max_ray_distance = settings.ray_distance
+        
+        # Create cage if needed
+        if settings.use_cage:
+            cage = self.setup_cage_mesh(context, settings.low_poly)
+            context.scene.render.bake.use_cage = True
+            context.scene.render.bake.cage_object = cage
+        
+        # Setup object selection
+        bpy.ops.object.select_all(action='DESELECT')
+        settings.high_poly.select_set(True)
+        settings.low_poly.select_set(True)
+        context.view_layer.objects.active = settings.low_poly
+        
+        self.report({'INFO'}, "High-to-low poly setup completed")
+        return {'FINISHED'}
+
+
+
+class BAKER_OT_CreatePBRMaterial(Operator):
+    bl_idname = "baker.create_pbr_material"
+    bl_label = "Create PBR Material"
+    bl_description = "Create a new PBR material with baked textures"
+
+    def find_baked_textures(self, context, material_name):
+        settings = context.scene.baker_settings
+        output_dir = Path(bpy.path.abspath(settings.output_path))
+        
+        texture_maps = {
+            'Base_Color': None,
+            'Normal': None,
+            'Roughness': None,
+            'Metallic': None,
+            'AO': None
+        }
+        
+        # Find matching texture files
+        for file in output_dir.glob(f"{material_name}_*.exr"):
+            for map_type in texture_maps.keys():
+                if map_type in file.name:
+                    texture_maps[map_type] = str(file)
+                    
+        return texture_maps
+
+    def setup_pbr_nodes(self, material, texture_maps):
+        nodes = material.node_tree.nodes
+        links = material.node_tree.links
+        nodes.clear()
+
+        # Create main nodes
+        output = nodes.new('ShaderNodeOutputMaterial')
+        principled = nodes.new('ShaderNodeBsdfPrincipled')
+        mapping = nodes.new('ShaderNodeMapping')
+        tex_coord = nodes.new('ShaderNodeTexCoord')
+
+        # Position main nodes
+        output.location = (600, 300)
+        principled.location = (300, 300)
+        mapping.location = (-600, 300)
+        tex_coord.location = (-800, 300)
+
+        # Create and connect texture nodes
+        y_offset = 300
+        for map_type, filepath in texture_maps.items():
+            if filepath:
+                # Create image texture node
+                tex_node = nodes.new('ShaderNodeTexImage')
+                tex_node.label = map_type
+                tex_node.location = (-300, y_offset)
+                
+                # Load image
+                tex_node.image = bpy.data.images.load(filepath)
+                
+                # Set color space
+                if map_type == 'Base_Color':
+                    tex_node.image.colorspace_settings.name = 'sRGB'
+                else:
+                    tex_node.image.colorspace_settings.name = 'Non-Color'
+                
+                # Connect to mapping node
+                links.new(mapping.outputs['Vector'], tex_node.inputs['Vector'])
+                links.new(tex_coord.outputs['UV'], mapping.inputs['Vector'])
+                
+                # Connect to appropriate Principled BSDF input
+                if map_type == 'Base_Color':
+                    links.new(tex_node.outputs['Color'], principled.inputs['Base Color'])
+                elif map_type == 'Normal':
+                    normal_map = nodes.new('ShaderNodeNormalMap')
+                    normal_map.location = (100, y_offset)
+                    links.new(tex_node.outputs['Color'], normal_map.inputs['Color'])
+                    links.new(normal_map.outputs['Normal'], principled.inputs['Normal'])
+                elif map_type == 'Roughness':
+                    links.new(tex_node.outputs['Color'], principled.inputs['Roughness'])
+                elif map_type == 'Metallic':
+                    links.new(tex_node.outputs['Color'], principled.inputs['Metallic'])
+                elif map_type == 'AO':
+                    mix = nodes.new('ShaderNodeMixRGB')
+                    mix.blend_type = 'MULTIPLY'
+                    mix.inputs[0].default_value = 1.0
+                    mix.location = (100, y_offset - 200)
+                    links.new(tex_node.outputs['Color'], mix.inputs[1])
+                    if principled.inputs['Base Color'].links:
+                        links.new(principled.inputs['Base Color'].links[0].from_socket, mix.inputs[2])
+                    links.new(mix.outputs['Color'], principled.inputs['Base Color'])
+                    
+                y_offset -= 250
+
+        # Connect Principled BSDF to Material Output
+        links.new(principled.outputs['BSDF'], output.inputs['Surface'])
+
+    def execute(self, context):
+        obj = context.active_object
+        if not obj:
+            self.report({'ERROR'}, "No active object")
+            return {'CANCELLED'}
+
+        # Create new material
+        mat_name = f"PBR_Material_{len(bpy.data.materials)}"
+        material = bpy.data.materials.new(name=mat_name)
+        material.use_nodes = True
+
+        # Find and setup baked textures
+        texture_maps = self.find_baked_textures(context, obj.name)
+        self.setup_pbr_nodes(material, texture_maps)
+
+        # Assign to object
+        if obj.data.materials:
+            obj.data.materials[0] = material
+        else:
+            obj.data.materials.append(material)
+
+        self.report({'INFO'}, f"Created PBR material with baked textures: {mat_name}")
+        return {'FINISHED'}
+
+class BAKER_OT_ImportModel(Operator):
+    bl_idname = "baker.import_model"
+    bl_label = "Import 3D Model"
+    bl_description = "Import various 3D model formats"
+    
+    filepath: StringProperty(subtype='FILE_PATH')
+    filter_glob: StringProperty(
+        default="*.fbx;*.obj;*.3ds;*.dae;*.gltf;*.glb;*.x3d;*.ply",
+        options={'HIDDEN'}
+    )
+
+    def execute(self, context):
+        ext = os.path.splitext(self.filepath)[1].lower()
+        
+        if ext == '.fbx':
+            bpy.ops.import_scene.fbx(filepath=self.filepath)
+        elif ext == '.obj':
+            bpy.ops.import_scene.obj(filepath=self.filepath)
+        elif ext == '.3ds':
+            bpy.ops.import_scene.threeds(filepath=self.filepath)
+        elif ext == '.dae':
+            bpy.ops.wm.collada_import(filepath=self.filepath)
+        elif ext in ('.gltf', '.glb'):
+            bpy.ops.import_scene.gltf(filepath=self.filepath)
+        elif ext == '.x3d':
+            bpy.ops.import_scene.x3d(filepath=self.filepath)
+        elif ext == '.ply':
+            bpy.ops.import_mesh.ply(filepath=self.filepath)
+            
+        self.report({'INFO'}, f"Imported: {self.filepath}")
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+class BAKER_OT_ExportGLB(Operator):
+    bl_idname = "baker.export_glb"
+    bl_label = "Export GLB (Unreal Baking)"
+    bl_description = "Export model as GLB with Unreal-compatible baked textures"
+
+    filepath: StringProperty(subtype='FILE_PATH')
+    filter_glob: StringProperty(default="*.glb", options={'HIDDEN'})
+
+    def execute(self, context):
+        settings = context.scene.baker_settings
+        
+        # Configure Unreal-compatible export settings
+        export_settings = {
+            'export_format': 'GLB',
+            'use_selection': False,
+            'export_materials': True,
+            'export_textures': True,
+            'export_normals': True,
+            'export_tangents': True,
+            'export_colors': True,
+            'export_extras': True,
+            'export_yup': True,
+            'export_apply': True,
+            'export_animations': True,
+            'export_current_frame': False,
+            'export_skins': True,
+            'export_morph': True,
+            'export_lights': False,
+            'export_cameras': False,
+            'export_image_format': 'PNG'
+        }
+        
+        # Perform Unreal-style texture baking
+        self.bake_unreal_textures(context)
+        
+        # Export GLB
+        bpy.ops.export_scene.gltf(
+            filepath=self.filepath,
+            **export_settings
+        )
+        
+        self.report({'INFO'}, f"Exported GLB with Unreal baking: {self.filepath}")
+        return {'FINISHED'}
+
+    def bake_unreal_textures(self, context):
+        # Configure Unreal PBR texture settings
+        context.scene.render.image_settings.file_format = 'PNG'
+        context.scene.render.image_settings.color_depth = '8'
+        context.scene.render.image_settings.color_mode = 'RGBA'
+        
+        # Adjust normal map settings for Unreal
+        context.scene.render.bake.normal_space = 'TANGENT'
+        context.scene.render.bake.normal_r = 'POS_X'
+        context.scene.render.bake.normal_g = 'POS_Y'
+        context.scene.render.bake.normal_b = 'POS_Z'
+        
+        # Perform baking with Unreal-compatible settings
+        bpy.ops.baker.bake()
+
+    def invoke(self, context, event):
+        if not self.filepath:
+            self.filepath = os.path.splitext(bpy.data.filepath)[0] + ".glb"
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+
+
+class BAKER_OT_Bake(Operator):
+    bl_idname = "baker.bake"
+    bl_label = "Bake PBR Textures"
+    bl_description = "Bake selected PBR maps"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    _timer = None
+    _start_time = 0
+    current_map = 0
+    total_maps = 0
+
+    def modal(self, context, event):
+        if event.type == 'TIMER':
+            elapsed_time = time.time() - self._start_time
+            context.area.header_text_set(
+                f"Baking: {self.current_map}/{self.total_maps} maps | "
+                f"Time: {int(elapsed_time)}s | "
+                f"Progress: {int((self.current_map / self.total_maps) * 100)}%"
+            )
+            context.area.tag_redraw()
+
+        return {'PASS_THROUGH'}
+
+    def invoke(self, context, event):
+        self._start_time = time.time()
+        self._timer = context.window_manager.event_timer_add(0.1, window=context.window)
+        context.window_manager.modal_handler_add(self)
+        return self.execute(context)
+
+    def finished(self, context):
+        context.window_manager.event_timer_remove(self._timer)
+        context.area.header_text_set(None)
+
+    def create_bake_image(self, context, name, color_space='sRGB'):
+        settings = context.scene.baker_settings
+        img = bpy.data.images.new(
+            name=name,
+            width=int(settings.resolution),
+            height=int(settings.resolution),
+            alpha=True,
+            float_buffer=True
+        )
+        img.colorspace_settings.name = color_space
+        return img
+
+    def setup_bake_nodes(self, material, img, context):
+        settings = context.scene.baker_settings
+        nodes = material.node_tree.nodes
+        
+        if settings.clean_image_nodes:
+            for node in nodes:
+                if node.type == 'TEX_IMAGE' and node.name.startswith('BakeNode'):
+                    nodes.remove(node)
+        
+        bake_node = nodes.new('ShaderNodeTexImage')
+        bake_node.name = "BakeNode"
+        bake_node.image = img
+        bake_node.select = True
+        nodes.active = bake_node
+        return bake_node
+
+
+def execute(self, context):
+    settings = context.scene.baker_settings
+    
+    # Initialize progress bar
+    bpy.context.window_manager.progress_begin(0, 100)
+    
+    # Count total maps
+    bake_maps = {
+        'Base_Color': (settings.bake_basecolor, 'DIFFUSE', 'sRGB'),
+        'Normal': (settings.bake_normal, 'NORMAL', 'Non-Color'),
+        'Roughness': (settings.bake_roughness, 'ROUGHNESS', 'Non-Color'),
+        'Metallic': (settings.bake_metallic, 'METALLIC', 'Non-Color'),
+        'AO': (settings.bake_ao, 'AO', 'Non-Color'),
+        'Emission': (settings.bake_emission, 'EMIT', 'Non-Color'),
+        'Displacement': (settings.bake_displacement, 'DISPLACEMENT', 'Non-Color'),
+        'Curvature': (settings.bake_curvature, 'NORMAL', 'Non-Color'),
+        'Thickness': (settings.bake_thickness, 'TRANSMISSION', 'Non-Color'),
+        'Glossiness': (settings.bake_glossiness, 'GLOSSY', 'Non-Color'),
+    }
+    
+    total_maps = sum(1 for _, (enabled, _, _) in bake_maps.items() if enabled)
+    current_map = 0
+
+    # In the baking loop:
+    for map_name, (enabled, bake_type, color_space) in bake_maps.items():
+        if not enabled:
+            continue
+            
+        current_map += 1
+        progress = (current_map / total_maps) * 100
+        bpy.context.window_manager.progress_update(progress)
+        bpy.context.window_manager.status_text_set(f"Baking {map_name}... {int(progress)}%")
+        
+        # Your existing baking code...
+    
+    bpy.context.window_manager.progress_end()
+    bpy.context.window_manager.status_text_set(None)
+
+    # Validation
+    if settings.selected_to_active:
+        if not settings.high_poly or not settings.low_poly:
+            self.report({'ERROR'}, "Select both high and low poly meshes")
+            return {'CANCELLED'}
+    elif not context.active_object:
+        self.report({'ERROR'}, "No active object selected")
+        return {'CANCELLED'}
+
+    # Setup render settings
+    # Set high-quality bake settings
+    context.scene.render.engine = 'CYCLES'
+    context.scene.cycles.samples = 512  # Increased samples
+    context.scene.cycles.use_denoising = True
+    context.scene.render.bake.margin = 16
+    context.scene.render.bake.use_clear = True
+    context.scene.cycles.max_bounces = 8
+    context.scene.cycles.diffuse_bounces = 4
+    context.scene.cycles.glossy_bounces = 4
+    context.scene.cycles.transmission_bounces = 8
+    context.scene.cycles.use_adaptive_sampling = True
+    context.scene.cycles.adaptive_threshold = 0.01
+    # Create output directory
+    output_dir = bpy.path.abspath(settings.output_path)
+    os.makedirs(output_dir, exist_ok=True)
+
+    try:
+        # Setup objects
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        
+        target_obj = settings.low_poly if settings.selected_to_active else context.active_object
+        target_obj.select_set(True)
+        context.view_layer.objects.active = target_obj
+        
+        if settings.selected_to_active:
+            settings.high_poly.select_set(True)
+
+        # Bake each map
+        for map_name, (enabled, bake_type, color_space) in bake_maps.items():
+            if not enabled:
+                continue
+                
+            self.current_map += 1
+            debug_log(f"Baking {map_name}")
+            
+            img_name = f"{target_obj.name}_{map_name}"
+            img = self.create_bake_image(context, img_name, color_space)
+
+            # Setup material nodes
+            for mat_slot in target_obj.material_slots:
+                if mat_slot.material:
+                    self.setup_bake_nodes(mat_slot.material, img, context)
+
+            # Configure normal map settings
+            if bake_type == 'NORMAL':
+                context.scene.render.bake.normal_space = settings.normal_space
+                context.scene.render.bake.normal_r = settings.normal_r
+                context.scene.render.bake.normal_g = settings.normal_g
+                context.scene.render.bake.normal_b = settings.normal_b
+
+            # Perform bake
+            bpy.ops.object.bake(type=bake_type)
+
+            # Save image
+            if settings.save_images:
+                img.filepath_raw = os.path.join(output_dir, f"{img_name}.exr")
+                img.file_format = 'OPEN_EXR'
+                img.save()
+
+            # Cleanup nodes
+            if settings.clean_image_nodes:
+                for mat_slot in target_obj.material_slots:
+                    if mat_slot.material:
+                        nodes = mat_slot.material.node_tree.nodes
+                        for node in nodes:
+                            if node.type == 'TEX_IMAGE' and node.name.startswith('BakeNode'):
+                                nodes.remove(node)
+
+        self.finished(context)
+        self.report({'INFO'}, "Baking completed successfully")
+        return {'FINISHED'}
+
+    except Exception as e:
+        self.report({'ERROR'}, f"Baking failed: {str(e)}")
+        return {'CANCELLED'}
+
+
+        
+class BAKER_OT_Bake(Operator):
+    bl_idname = "baker.bake"
+    bl_label = "Bake PBR Textures"
+    bl_description = "Bake selected PBR maps"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def create_bake_image(self, context, name, color_space='sRGB'):
+        settings = context.scene.baker_settings
+        img = bpy.data.images.new(
+            name=name,
+            width=int(settings.resolution),
+            height=int(settings.resolution),
+            alpha=True,
+            float_buffer=True
+        )
+        img.colorspace_settings.name = color_space
+        return img
+
+    def setup_bake_nodes(self, material, img, context):
+        settings = context.scene.baker_settings
+        nodes = material.node_tree.nodes
+        
+        if settings.clean_image_nodes:
+            for node in nodes:
+                if node.type == 'TEX_IMAGE' and node.name.startswith('BakeNode'):
+                    nodes.remove(node)
+        
+        bake_node = nodes.new('ShaderNodeTexImage')
+        bake_node.name = "BakeNode"
+        bake_node.image = img
+        bake_node.select = True
+        nodes.active = bake_node
+        return bake_node
+
+    def execute(self, context):
+        settings = context.scene.baker_settings
+        
+        wm = context.window_manager
+        wm.progress_begin(0, 100)
+
+        # Validation
+        if settings.selected_to_active:
+            if not settings.high_poly or not settings.low_poly:
+                wm.progress_end()
+                self.report({'ERROR'}, "Select both high and low poly meshes")
+                return {'CANCELLED'}
+        elif not context.active_object:
+            wm.progress_end()
+            self.report({'ERROR'}, "No active object selected")
+            return {'CANCELLED'}
+
+        # Setup render settings
+        context.scene.render.engine = 'CYCLES'
+        context.scene.cycles.samples = settings.samples
+        context.scene.render.bake.margin = settings.margin
+
+        # Create output directory
+        output_dir = bpy.path.abspath(settings.output_path)
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Define bake maps
+        bake_maps = {
+            'Base_Color': (settings.bake_basecolor, 'DIFFUSE', 'sRGB'),
+            'Normal': (settings.bake_normal, 'NORMAL', 'Non-Color'),
+            'Roughness': (settings.bake_roughness, 'ROUGHNESS', 'Non-Color'),
+            'Metallic': (settings.bake_metallic, 'METALLIC', 'Non-Color'),
+            'AO': (settings.bake_ao, 'AO', 'Non-Color'),
+            'Emission': (settings.bake_emission, 'EMIT', 'Non-Color'),
+            'Displacement': (settings.bake_displacement, 'DISPLACEMENT', 'Non-Color'),
+            'Curvature': (settings.bake_curvature, 'NORMAL', 'Non-Color'),
+            'Thickness': (settings.bake_thickness, 'TRANSMISSION', 'Non-Color'),
+            'Glossiness': (settings.bake_glossiness, 'GLOSSY', 'Non-Color'),
+        }
+
+        total_maps = sum(1 for _, (enabled, _, _) in bake_maps.items() if enabled)
+        current_map = 0
+
+        try:
+            # Setup objects
+            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.select_all(action='DESELECT')
+            
+            target_obj = settings.low_poly if settings.selected_to_active else context.active_object
+            target_obj.select_set(True)
+            context.view_layer.objects.active = target_obj
+            
+            if settings.selected_to_active:
+                settings.high_poly.select_set(True)
+
+            # Bake each map
+            for map_name, (enabled, bake_type, color_space) in bake_maps.items():
+                if not enabled:
+                    continue
+
+                current_map += 1
+                progress = (current_map / total_maps) * 100
+                wm.progress_update(progress)
+                
+                debug_log(f"Baking {map_name} ({int(progress)}%)")
+                img_name = f"{target_obj.name}_{map_name}"
+                img = self.create_bake_image(context, img_name, color_space)
+
+                # Setup material nodes
+                for mat_slot in target_obj.material_slots:
+                    if mat_slot.material:
+                        self.setup_bake_nodes(mat_slot.material, img, context)
+
+                # Configure normal map settings
+                if bake_type == 'NORMAL':
+                    context.scene.render.bake.normal_space = settings.normal_space
+                    context.scene.render.bake.normal_r = settings.normal_r
+                    context.scene.render.bake.normal_g = settings.normal_g
+                    context.scene.render.bake.normal_b = settings.normal_b
+
+                # Perform bake
+                bpy.ops.object.bake(type=bake_type)
+
+                # Save image
+                if settings.save_images:
+                    img.filepath_raw = os.path.join(output_dir, f"{img_name}.exr")
+                    img.file_format = 'OPEN_EXR'
+                    img.save()
+
+                # Cleanup nodes
+                if settings.clean_image_nodes:
+                    for mat_slot in target_obj.material_slots:
+                        if mat_slot.material:
+                            nodes = mat_slot.material.node_tree.nodes
+                            for node in nodes:
+                                if node.type == 'TEX_IMAGE' and node.name.startswith('BakeNode'):
+                                    nodes.remove(node)
+
+            wm.progress_end()
+            self.report({'INFO'}, "Baking completed successfully")
+            return {'FINISHED'}
+
+        except Exception as e:
+            wm.progress_end()
+            self.report({'ERROR'}, f"Baking failed: {str(e)}")
+            return {'CANCELLED'}
+
+        
+        
+class BAKER_PT_MainPanel(Panel):
+    bl_label = "PBR Baker Pro"
+    bl_idname = "VIEW3D_PT_baker"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "PBR Baker"
+
+    def draw(self, context):
+        layout = self.layout
+        settings = context.scene.baker_settings
+
+        # High-to-Low Poly Setup
+        box = layout.box()
+        box.label(text="High-to-Low Poly Setup", icon='MOD_MULTIRES')
+        col = box.column(align=True)
+        col.prop(settings, "high_poly")
+        col.prop(settings, "low_poly")
+        col.prop(settings, "selected_to_active")
+        col.prop(settings, "cage_extrusion")
+        col.prop(settings, "ray_distance")
+        col.prop(settings, "use_cage")
+        col.operator("baker.setup_high_to_low", icon='SHADERFX')
+
+        # UV Unwrap Settings
+        box = layout.box()
+        box.label(text="UV Unwrap", icon='UV')
+        col = box.column(align=True)
+        col.prop(settings, "uv_angle_limit")
+        col.prop(settings, "uv_margin")
+        col.prop(settings, "uv_area_weight")
+        col.prop(settings, "use_selected_faces")
+        col.operator("baker.smart_uv", icon='MOD_UVPROJECT')
+     
+        # Bake Settings
+        box = layout.box()
+        box.label(text="Bake Settings", icon='RENDER_STILL')
+        col = box.column(align=True)
+        col.prop(settings, "resolution")
+        col.prop(settings, "samples")
+        col.prop(settings, "margin")
+        col.prop(settings, "output_path")
+        col.prop(settings, "clean_image_nodes")
+        col.prop(settings, "save_images")
+
+        # Normal Map Settings
+        if settings.bake_normal:
+            box = layout.box()
+            box.label(text="Normal Map Settings", icon='NORMALS_FACE')
+            col = box.column(align=True)
+            col.prop(settings, "normal_space")
+            row = col.row(align=True)
+            row.prop(settings, "normal_r", text="R")
+            row.prop(settings, "normal_g", text="G")
+            row.prop(settings, "normal_b", text="B")
+
+        # Maps Selection
+        box = layout.box()
+        box.label(text="Maps to Bake:", icon='TEXTURE')
+        col = box.column(align=True)
+        col.prop(settings, "bake_basecolor")
+        col.prop(settings, "bake_normal")
+        col.prop(settings, "bake_roughness")
+        col.prop(settings, "bake_glossiness")
+        col.prop(settings, "bake_ao")
+        col.prop(settings, "bake_emission")
+        col.prop(settings, "bake_displacement")
+        col.prop(settings, "bake_curvature")
+        col.prop(settings, "bake_thickness")
+        # Add to BAKER_PT_MainPanel.draw()
+        # Import/Export
+        box = layout.box()
+        box.label(text="Import/Export", icon='IMPORT')
+        col = box.column(align=True)
+        col.operator("baker.import_model", icon='IMPORT')
+        col.operator("baker.export_glb", icon='EXPORT')
+        
+        
+
+        # Bake Button
+        row = layout.row()
+        row.scale_y = 2.0
+        row.operator("baker.bake", text="BAKE ALL MAPS", icon='RENDER_RESULT')
+        row.operator("baker.create_pbr_material", text="Creat PBR Material", icon='MATERIAL')
+        
+
+# Registration
+classes = [
+    BAKER_PG_Settings,
+    BAKER_OT_SmartUV,
+    BAKER_OT_SetupHighToLow,
+    BAKER_OT_Bake,
+    BAKER_OT_CreatePBRMaterial,
+    BAKER_OT_ImportModel,    # Add new class
+    BAKER_OT_ExportGLB,     # Add new class
+    BAKER_PT_MainPanel,
+]
+
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    bpy.types.Scene.baker_settings = PointerProperty(type=BAKER_PG_Settings)
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+    del bpy.types.Scene.baker_settings
+
+if __name__ == "__main__":
+    register()
+
+def register():
+    bpy.utils.register_class(BakerSettings)
+    bpy.types.Scene.baker_settings = PointerProperty(type=BakerSettings)
